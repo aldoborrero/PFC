@@ -2,6 +2,8 @@
 
 Aquí dejo en este repositorio de Github todo lo relacionado con mi PFC que incluye los siguientes elementos:
 
+**Nota**: ¡Este repositorio pesa bastante ya que contiene muchas imágenes y archivos adjuntos!
+
 ## Anteproyecto
 
 ![](http://farm9.staticflickr.com/8086/8350507378_e83cef17fb_c.jpg)

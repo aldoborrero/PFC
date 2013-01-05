@@ -1,5 +1,0 @@
-Este Profile genera una comunidad de práctica con el nombre que se le especifique:
-
-{DATACHANNEL(channel=crear_comunidad)}
-nombre_asignatura, Nombre asignatura
-{DATACHANNEL}

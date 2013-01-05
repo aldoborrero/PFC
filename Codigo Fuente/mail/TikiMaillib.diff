@@ -1,0 +1,405 @@
+8,10d7
+< /** Extension htmlMimeMail
+<   * set some default params (mainly utf8 as titi is utf8) + use the mailCharset pref from a user
+<   */
+13c10,11
+< include_once("lib/webmail/htmlMimeMail.php");
+---
+> require_once ('swift/swift_required.php');
+> 
+15,124d12
+< class TikiMail extends HtmlMimeMail
+< {
+< 		var $charset;
+< 
+< 	/* $user = user you send the mail
+< 	   $from = email you send from*/
+< 	function TikiMail($user = null, $from=null) {
+< 		global $prefs, $tikilib;
+< 
+< 		parent::htmlMimeMail();
+< 		$this->charset = !$user ? $prefs['default_mail_charset'] : $tikilib->get_user_preference($user, 'mailCharset', 'utf-8');
+< 		$this->setTextCharset($this->charset);
+< 		$this->setHtmlCharset($this->charset);
+< 		$this->setHeadCharset($this->charset);
+< 		if (isset($prefs['mail_crlf'])) {
+< 			$this->setCrlf($prefs['mail_crlf'] == "LF"? "\n": "\r\n");
+< 		}
+< 		if ($prefs['zend_mail_handler'] == 'smtp') {
+< 			if ($prefs['zend_mail_smtp_auth'] == 'login') {
+< 				$this->setSMTPParams($prefs['zend_mail_smtp_server'], $prefs['zend_mail_smtp_port'], $prefs['zend_mail_smtp_helo'], true, $prefs['zend_mail_smtp_user'], $prefs['zend_mail_smtp_pass'], $prefs['zend_mail_smtp_security']);
+< 			} else {
+< 				$this->setSMTPParams($prefs['zend_mail_smtp_server'], $prefs['zend_mail_smtp_port'], $prefs['zend_mail_smtp_helo'], false, null, null, $prefs['zend_mail_smtp_security']);
+< 			}
+< 		}
+< 		if (empty($from)) {
+< 			$from = $prefs['sender_email'];
+< 		}
+< 		$this->setFrom($from);
+< 		if (!@ini_get('safe_mode')) {
+< 			$this->setReturnPath($from); // in safe-mode, return-path must then be configured at the server level
+< 		}
+< 		$this->setHeader("Return-Path", $from); // just in case, mainly will not work as usually the server rewrites the envelop
+< 		$this->setHeader("Reply-To",  $from);
+< 	}
+< 
+< 	function setUser($user) {
+< 		global $tikilib, $prefs;
+< 		$this->charset = $tikilib->get_user_preference($user, 'mailCharset', $prefs['default_mail_charset']);
+< 		$this->setTextCharset($this->charset);
+< 		$this->setHtmlCharset($this->charset);
+< 		$this->setHeadCharset($this->charset);
+< 	}
+< 		
+< 	function _encodeHeader($input, $charset = 'ISO-8859-1') {
+< // todo perhaps chunk_split
+< 		if (preg_match('/[\x80-\xFF]/', $input)) {
+< 			$input = preg_replace('/([\x80-\xFF =])/e', '"=" . strtoupper(dechex(ord("\1")))', $input);
+< 			return '=?'.$charset .'?Q?'.$input.'?=';
+< 		}
+< 		else
+< 			return $input;
+< 	}
+< 	
+< 	function setSubject($subject) {
+< 		if ($this->charset != "utf-8")
+< 			parent::setSubject(encodeString($this->encodeNonInCharset($subject, false), $this->charset));
+< 		else
+< 			parent::setSubject($subject);
+< 	}
+< 	function setHtml($html, $text = null, $images_dir = null) {
+< 		if ($this->charset != "utf-8")
+< 			
+< 			parent::setHtml(encodeString($this->encodeNonInCharset($html, true), $this->charset), encodeString($this->encodeNonInCharset($text, false), $this->charset), $images_dir);
+< 		else
+< 			parent::setHtml($html, $text , $images_dir);
+< 	}
+< 	function setText($text = '') {
+< 		global $prefs;
+< 		if (!empty($prefs['email_footer'])) {
+< 			$text .= CRLF . $prefs['email_footer'];
+< 		}
+< 
+< 		if ($this->charset != "utf-8")
+< 			parent::setText(encodeString($this->encodeNonInCharset($text, false), $this->charset));
+< 		else
+< 			parent::setText($text);
+< 	}
+< 	/** encode non existing charater is final charset
+< 	 */
+< 	function encodeNonInCharset($string, $toHtml=true) {
+< 		if ($this->charset == 'iso-8859-1') {
+< 			$bad = array('€','‚', 'ƒ','„', '…', '†', '‡', 'ˆ', '‰', 'Š',
+< 				'‹', 'Œ', '‘', '’', '“', '”', '•', '–', '—', '˜', '™',
+< 				'š', '›', 'œ', 'ÿ');
+< 			$html = array('&euro;', '&sbquo;', '&fnof;', '&bdquo;', '&hellip;', '&dagger;', '&Dagger;', '&circ;', '&permil;', '&Scaron;', 
+< 				'&lsaquo;', '&OElig;', '&lsquo;', '&rsquo;', '&ldquo;', '&rdquo;', '&bull;', '&ndash;', '&mdash;', '&tilde;', '&trade;',
+< 				'&scaron;', '&rsaquo;', '&oelig;', '&Yuml;');
+< 			$text = array('euros', ',', 'f', ',,', '...', 'T','T', '^', '0/00', 'S',
+< 				'<', 'OE', '\'', '\'', '"', '"', '.', '-', '-', '~', '(TM)',
+< 				's', '>', 'oe', 'y');
+< 	
+< 			return str_replace($bad, $toHtml? $html: $text, $string);
+< 		} else
+< 			return $string;
+< 	}
+< 	function send($recipients, $type = 'mail') {
+< 		global $prefs;
+< 		global $logslib; include_once ('lib/logs/logslib.php');
+< 		if ($prefs['zend_mail_handler'] == 'smtp') {
+< 			$type = 'smtp';
+< 		}
+< 		$result = parent::send($recipients, $type);
+< 		$title = $result?'mail': 'mail error';
+< 		if (!$result || $prefs['log_mail'] == 'y')
+< 			foreach ($recipients as $u) {
+< 				$logslib->add_log($title, $u.'/'.$this->headers['Subject']);
+< 			}
+< 		return $result;
+< 	}
+< }	
+126,135c14,49
+<   * encode a string
+<   * @param string $string : the string in utf-8
+<   * @param $charset: iso8859-1 or utf-8
+<   */
+< function encodeString($string, $charset="utf-8") {
+< 	if ($string == null)
+< 		return null;
+< 	else if ($charset == "iso-8859-1")
+< 		return utf8_decode($string);
+< 	/* add other charsets */
+---
+>  * TikiMail 2 - Rewritten using SwiftMail library
+>  * @author Nathan River - (nrvr)
+>  */
+> class TikiMail {
+>     
+>     private $mailer;
+>     private $message;
+>     private $transport;
+>     private $logger;
+> 
+>     function __construct ($user=null, $from=null) {
+> 
+>         global $prefs, $tikilib;
+> 
+>         // Check params to build a Swift Transport Object
+>         switch ($prefs['zend_mail_handler']) {
+>             case 'smtp':
+>                 $this->transport = Swift_SmtpTransport::newInstance()
+>                      ->setHost($prefs['zend_mail_smtp_server']) 
+>                      ->setPort($prefs['zend_mail_smtp_port'])
+>                      ->setEncryption($prefs['zend_mail_smtp_security'])
+>                      ->setUsername($prefs['zend_mail_smtp_user'])
+>                      ->setPassword($prefs['zend_mail_smtp_pass']);
+>                 break;
+>             case 'GMail':
+>                 $this->transport = Swift_SmtpTransport::newInstance()
+>                      ->setHost('smtp.gmail.com') 
+>                      ->setPort(465)
+>                      ->setEncryption('ssl')
+>                      ->setUsername($prefs['zend_mail_smtp_user'])
+>                      ->setPassword($prefs['zend_mail_smtp_pass']);
+>                 break;
+>             case 'sendmail':
+>                 $this->transport = Swift_SendmailTransport::newInstance('/usr/sbin/exim -bs');
+>                 break;
+>         }
+137,139c51,52
+< 	else
+< 		return $string;
+< }
+---
+>         // Fill the mailer with the transport object
+>         $this->mailer = Swift_Mailer::newInstance($this->transport);
+141,154c54,62
+< function decode_subject_utf8($string){
+< 	if (preg_match('/=\?.*\?.*\?=/', $string) === false)
+< 		return $string;
+< 	$string = explode('?', $string);
+< 	$str = strtolower($string[2]) == 'q' ?quoted_printable_decode($string[3]):base64_decode($string[3]);
+<  	if (strtolower($string[1]) == "iso-8859-1")
+< 		return utf8_encode($str);
+< 	else if (strtolower($string[1]) == "utf-8")
+< 		return $str;
+< 	else if (function_exists('mb_convert_encoding'))
+< 		return mb_convert_encoding($str, "utf-8", $string[1]);
+< 	else
+< 		return $str;
+< } 
+---
+>         // We create an empty message
+>         $this->message = Swift_Message::newInstance();
+>         $this->message->setCharset($prefs['default_mail_charset'] ? $prefs['default_mail_charset'] : 'utf-8')
+>                       ->setFrom(array($prefs['sender_email'] => $prefs['browsertitle']));
+>         
+>         if (!empty($from)) {
+>             $this->setFrom($from);
+>         }
+>     }
+156,166c64,77
+< /**
+<  * Format text, sender and date for a plain text email reply
+<  * - Split into 75 char long lines prepended with >
+<  * 
+<  * @param $text		email text to be quoted
+<  * @param $from		email from name/address to be quoted
+<  * @param $date		date of mail to be quoted
+<  * @return string	text ready for replying in a plain text email
+<  */
+< function format_email_reply(&$text, $from, $date) {
+< 	$lines = preg_split('/[\n\r]+/',wordwrap($text));
+---
+>     // -------------------------
+>     // New TikiMail API
+>     // -------------------------
+> 
+>     /**
+>     * Identifies this message with a unique ID, 
+>     * usually containing the domain name and time generated
+>     *
+>     * @param Swift_Transport $transport
+>     * @return Swift_Mailer
+>     */
+>     public function getMessageId () {
+>         return $this->message->getId();
+>     }
+168,176c79
+< 	for ($i = 0, $icount_lines = count($lines); $i < $icount_lines; $i++) {
+< 		$lines[$i] = '> '.$lines[$i]."\n";
+< 	}
+< 	$str = !empty($from) ? $from.' wrote' : '';
+< 	$str .= !empty($date) ? ' on '.$date : '';
+< 	$str = "\n\n\n".$str."\n".implode($lines);
+< 	
+< 	return $str;
+< }
+---
+>     public function setMessageId () {}
+177a81,83
+>     public function getFrom () {
+>         return $this->message->getFrom();
+>     }
+179,206c85,172
+< /**
+<  * Attempt to close any unclosed HTML tags
+<  * Needs to work with what's inside the BODY
+<  * originally from http://snipplr.com/view/3618/close-tags-in-a-htmlsnippet/
+<  * 
+<  * @param $html			html input
+<  * @return string		corrected html out
+<  */
+< function closetags ( $html ) {
+<     #put all opened tags into an array
+<     preg_match_all ( "#<([a-z]+)( .*)?(?!/)>#iU", $html, $result );
+<     $openedtags = $result[1];
+<  
+<     #put all closed tags into an array
+<     preg_match_all ( "#</([a-z]+)>#iU", $html, $result );
+<     $closedtags = $result[1];
+<     $len_opened = count ( $openedtags );
+<     # all tags are closed
+<     if( count ( $closedtags ) == $len_opened ) {
+<         return $html;
+<     }
+<     $openedtags = array_reverse ( $openedtags );
+<     # close tags
+<     for( $i = 0; $i < $len_opened; $i++ ) {
+<         if ( !in_array ( $openedtags[$i], $closedtags )) {
+<             $html .= "</" . $openedtags[$i] . ">";
+<         } else {
+<             unset ( $closedtags[array_search ( $openedtags[$i], $closedtags)] );
+---
+>     public function setFrom($from) {
+>         $this->message->setFrom(array($from));
+>     }
+>     
+>     public function getTo() {
+>         return $this->message->getTo();
+>     }
+> 
+>     public function setTo ($recipients) {
+>         $this->message->setTo($recipients);
+>         return $this;
+>     }
+> 
+>     public function getCc () {
+>         return $this->message->getCc();
+>     }
+> 
+>     public function setCc ($address) {
+>         $this->message->setCc(array($address));
+>         return $this;
+>     }
+> 
+>     public function getBcc () {
+>         return $this->message->getBcc();
+>     }
+> 
+>     public function setBcc ($address) {
+>         $this->message->setBcc(array($address));
+>         return $this;
+>     }
+> 
+>     public function getSubject () {
+>         return $this->message->getSubject();
+>     }
+> 
+>     public function setSubject ($subject) {
+>         $this->message->setSubject($subject);
+>         return $this;
+>     }
+> 
+>     public function getDate () {
+>         return $this->message->getDate();
+>     }
+> 
+>     public function setDate () {}
+> 
+>     public function getContentType () {
+>         return $this->message->getContentType();
+>     }
+> 
+>     public function setContentType() {}
+> 
+>     public function setBody ($text) {
+>         $this->message->setBody($text, 'text/html');
+>         return $this;
+>     }
+> 
+>     public function getReplyTo() {}
+> 
+>     public function setReplyTo($address) {
+>         $this->message->setReplyTo(array($address));
+>         return $this;
+>     }
+> 
+>     public function attach() {}
+> 
+> 
+>     public function getMessageObject() {
+>         return $this->message;
+>     }
+> 
+>     public function setMessageObject($messageObject) {
+>         $this->message = $messageObject;
+>         return $this;
+>     }
+> 
+>     /**
+>     * Sends the email.
+>     * @param array email - The destination email, also can be added with the function setTo($email).
+>     */
+>     public function send($email = null) {
+>         if (isset($email)) {
+>             $this->setTo($email);
+>         }
+>         try {
+>             return $this->mailer->send($this->message);
+>         } catch (Exception $e) {
+>             return $e->getMessage();
+209,210d174
+<     return $html;
+< }
+211a176,215
+>     // -----------------------------------------------
+>     // OLD API = For compatibility with the old code!!
+>     // -----------------------------------------------
+>     // Don't use this methods wherever possible,
+>     // above there are more compact and cleaner methods.
+> 
+>     /**
+>     * Do nothing! Left here for compatibility with the old code.
+>     */
+>     public function buildMessage() {}
+> 
+>     public function setText($text) {
+>         $this->message->addPart($text, 'text/plain');
+>     }
+> 
+>     public function setHtml($html, $text = null, $images_dir = null) {
+>         $this->setBody($html);
+>         if (isset($text)) {
+>             $this->setText($text);
+>         }
+>     }
+> 
+>     public function setHeader($header, $value) {
+>         global $prefs;
+>         switch ($header) {
+>             case 'Reply-To':
+>                 $this->setReplyTo($value);
+>                 break;
+>             case 'From':
+>                 if ($value != $prefs['sender_email']) {
+>                     $this->setFrom($value);
+>                 }
+>                 break;
+>         }
+>     }
+> 
+>     public function setUser($subject) {}
+> 
+>     public function addAttachment($file, $name = '', $c_type = 'application/octet-stream', $encoding = 'base64') {}
+> }
