@@ -1,0 +1,65 @@
+% Macros que facilitan las tareas de escritura.
+% Basadas en el trabajo de Eivind Uggedal.
+
+% Listados de código fuente
+\newcommand{\code}[1]{\texttt{{#1}}}
+
+% Título de los libros
+\newcommand{\work}[1]{{\textit{\workfont #1}}}
+
+% Expresiones latinas
+\let\latin\term
+
+% Entrecomillado
+\newcommand{\q}[1]{``#1''}
+	
+% Referencia a una figura. Formato: Figura 1.2
+\newcommand\figureref[1]{%
+Figura~\ref{fig:#1}%
+}
+
+% Referencia a una seccion sin numeracion de página. Formato: S. A.1
+\newcommand\sectionnopageref[1]{%
+\textsection~\ref{section:#1}%
+}
+
+%\newcommand\figurepageref[1]{%
+%\figureref{#1}
+%(p.~\pageref{figure:#1})%
+%}
+
+%\newcommand\tableref[1]{%
+%Table~\ref{table:#1}%
+%}
+
+%\newcommand\tablepageref[1]{%
+%\tableref{#1}
+%(p.~\pageref{table:#1})%
+%}
+
+%\newcommand\sourcecoderef[1]{%
+%Source Code Listing~\ref{sourcecode:#1}%
+%}
+
+%\newcommand\sourcecodepageref[1]{%
+%\sourcecoderef{#1}
+%(p.~\pageref{sourcecode:#1})%
+%}
+
+% Referencia a un capítulo. Formato: Capítulo 3 (pág. 21)
+\newcommand\chapterref[1]{%
+Capítulo~\ref{chapter:#1}
+(pág.~\pageref{chapter:#1})%
+}
+
+% Referencia a una sección del libro. Formato: S 1.2 (pág. 13)
+\newcommand\sectionref[1]{%
+\textsection~\ref{section:#1}
+(pág.~\pageref{section:#1})%
+}
+
+% Referencia a un apéndice del libro. Formato: Apéndice A (pág. 14)
+\newcommand\appendixref[1]{%
+Apéndice~\ref{appendix:#1}
+(pág.~\pageref{appendix:#1})%
+}

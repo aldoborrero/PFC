@@ -1,0 +1,59 @@
+\documentclass[12pt,
+			 oneside,
+			 %draft
+             ]{UAHMemoir}
+             
+\author{Aldo Borrero González}
+\title{Gestión dinámica de grupos en una plataforma de aprendizaje virtual basada en TikiWiki}
+
+\include{macros}
+\include{abreviaturas}
+\addbibresource{bibliografia.bib}
+
+\makeindex
+\makeglossaries
+
+\begin{document}
+
+  \frontmatter
+    \maketitle
+    \clearpage
+    \include{agradecimientos}
+    \clearpage
+    \tableofcontents
+    \clearpage
+    \listoffigures
+    \clearpage
+    %\listoftables
+    
+    \include{resumen}
+
+  \mainmatter
+    \include{introduccion}
+    
+    \part{Entendiendo ALMA y TikiWiki}
+      \include{estado.de.la.cuestion}
+      \include{eleccion.software.wiki}
+      \include{conceptos.fundamentales.tikiwiki}
+      
+    \part{Automatización de recursos con Profiles}
+      \include{profiles}
+      \include{creacion.dinamica}
+    
+    \part{Sumario}
+      \include{conclusiones}
+
+    \addcontentsline{toc}{part}{\appendixtocname}
+    \appendixpage*
+
+     \begin{appendices}
+       \include{apendice.yaml}
+       \include{apendice.codigo.fuente}
+       \include{apendice.manual.usuario}
+     \end{appendices}
+
+  \backmatter
+    \printglossary[title=Acrónimos, toctitle=Acrónimos]
+    \printbibliography
+
+\end{document}

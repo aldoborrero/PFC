@@ -1,0 +1,329 @@
+\chapter{Código Fuente} 
+\label{appendix:apendice-b}
+
+\section{Organización del código de \tiki{}}
+\label{appendix:organizacion-codigo}
+
+\tiki{} es un proyecto de código abierto que ha sido desarrollado completamente en \php{}. La organización del código sigue una distribución precisa y lógica. Aún así, para una persona neófita que se interna por primera vez en el desarrollo de alguna librería o modificación, puede pensar que la estructura del propio proyecto es algo caótica. A continuación, se muestra un listado de los directorios y archivos más importantes de \tiki{} así como una breve descripción de ellos:
+ 
+\begin{itemize}
+\item \textit{lib/}: Este directorio guarda todas las librerías principales de \tiki{}, si queremos realizar una modificación en el núcleo del programa este es nuestro sitio.
+
+\item \textit{db/}: En este directorio se guardan las definiciones del esquema \textit{relacional} de \tiki{}. Aquí es donde se aloja el archivo \texttt{local.php}.
+
+\item \textit{db/local.php}: Este archivo guarda la configuración a la base de datos que hayamos instalado en \tiki{}. Si queremos reinstalar todo desde cero, simplemente hay que limpiar la base de datos y borrar este archivo.
+
+\item \textit{templates/}: Este directorio guarda las plantillas programadas en Smarty \cite{web:smarty}.
+
+\item \textit{templates\_c/}: Este directorio sirve para guardar la \textit{caché} de \tiki{}. Normalmente no es útil cambiar nada de aquí (aunque se puede borrar el directorio para obligar a que \tiki{} regenere los datos de nuevo).
+
+\item \textit{img}: Este directorio guarda la identidad de \tiki{}. Es útil por si se quiere cambiar el logotipo que muestra por defecto por uno propio.
+\end{itemize}
+
+\section{Listado de Profiles}
+
+Se listan todos los \profiles{} que han sido diseñados para llevar a cabo este proyecto:
+
+\subsection{Profile: Configuración de ALMA}
+\label{section:configuracion_alma}
+
+\begin{pyglist}[language=text]
+Este profile configura Tikiwiki para trabajar en ALMA.
+
+Crea también los \profiles{} necesarios para crear asignaturas de manera automática.
+
+Se puede ejecutar directamente en Admin > Profiles > Advanced > Profile Tester
+
+Esta sección se encarga de configurar las opciones generales de Tiki. ¡No olvides 
+cambiar la contraseña del correo por la contraseña original!
+
+Tampoco olvides copiar el contenido de Crear_Comunidad_de_Practica_Template 
+a la página wiki con el mismo nombre!
+
+{CODE(caption="YAML" wrap="1")}
+preferences:
+  language: es
+  feature_wysiwyg:  y
+  wysiwyg_default: y
+  wysiwyg_optional: y
+  wikiplugin_equation: y
+  wikiplugin_perspective: n
+  wikiplugininline_perspective: n
+  wikiplugininline_equation: y
+  feature_blogs:  n
+  feature_categories:  y
+  feature_file_galleries:  n
+  feature_forums:  n
+  feature_freetags:  n
+  feature_help:  n
+  feature_trackers:  n
+  feature_mytiki:  y
+  feature_userPreferences:  y
+  feature_profiles: y
+  feature_perspective: y
+  allowRegister:  y
+  min_username_length:  1
+  max_username_length:  50
+  min_pass_length:  4  
+  forgotPass:  y
+  cookie_name:  ALMA
+  wikiHomePage:  HomePage
+  sender_email:  alma@uah.es
+  siteTitle:  ALMA
+  browsertitle: ALMA
+  site_title_location: before
+  server_timezone: Madrid/Europe
+  display_timezone: Madrid/Europe
+  zend_mail_handler: smtp
+  default_mail_charset: utf-8
+  zend_mail_smtp_user: alma.disciplinar@gmail.com
+  zend_mail_smtp_pass: password
+  zend_mail_smtp_port: 465
+  zend_mail_smtp_security: ssl
+  zend_mail_smtp_auth: plain
+  zend_mail_smtp_server: smtp.gmail.com
+  log_mail: n
+  wikiplugin_datachannel: y
+  profile_channels: crear_comunidad, tiki://local, Crear_Comunidad_de_Practica_Template, Admins
+  sitelogo_title: ALMA (Aula Libre Multidisciplinar Abierta)
+  sitelogo_src: img/tiki/tikisitelogo.png
+  sitelogo_alt: Alma
+{CODE}
+
+Esta sección se encarga de crear las páginas Wiki con el Profile de Crear 
+Comunidad de Paractica y su Data Channel correspondiente. Los asigna al grupo 
+de Profiles y sólo los admins son capaces de ejecutar y ver esas páginas.
+
+{CODE(caption="YAML" wrap="1")}
+objects:
+  -
+    type: wiki_page
+    ref: wiki1
+    data:
+      name: Crear_Comunidad_de_Practica_GUI
+      content: "{DATACHANNEL(channel=crear_comunidad)}nombre_asignatura, 
+      Nombre de la comunidad de practica{DATACHANNEL}"
+  -
+    type: wiki_page
+    ref: wiki2
+    data:
+      name: Crear_Comunidad_de_Practica_Template
+      content: Rellenar el contenido de esta pagina con el archivo del mismo nombre
+  -
+    type: category
+    ref: profilecateg
+    data:
+      name: Profiles
+      description: Categoria donde se almacenan los profiles de las comunidades de practica
+      items:
+       - [ wiki_page, $wiki1 ]
+       - [ wiki_page, $wiki2 ]
+permissions:
+ Admins:
+  objects:
+   -
+    type: category
+    id: $profilecateg
+    allow:
+      - admin
+ Registered:
+  objects:
+   -
+    type: category
+    id: $profilecateg
+    deny: view, edit, view_category, edit_category
+ Anonymous:
+  objects:
+   -
+    type: category
+    id: $profilecateg
+    deny: view, edit, view_category, edit_category
+{CODE}
+
+Creamos el menú que permite cambiar de asignatura a los usuarios que estén
+registrados en la plataforma.
+
+{CODE(caption="YAML", wrap="1")}
+objects:
+ -
+  type: module
+  ref: switcher
+  data:
+   name: perspective
+   position: left
+   order: 10
+   groups: [ Registered ]
+   params:
+     title: Asignaturas
+{CODE}
+\end{pyglist}
+
+\subsection{Profile: Creación Comunidad de Práctica}
+\label{section:creacion-comunidad}
+
+\begin{pyglist}[language=text]
+!!!!!Creación de una asignatura usando Profiles
+
+{CODE(caption=>YAML,wrap=1)}
+mappings:
+ Member: $profilerequest:nombre_asignatura$Asignatura sin nombre$ Alumnos
+ Lead: $profilerequest:nombre_asignatura$Asignatura sin nombre$ Profesores
+objects:
+ -
+  type: category
+  ref: project_root
+  data:
+   name: $profilerequest:nombre_asignatura$Asignatura sin nombre$
+   parent: 0
+   items:
+    - [ wiki page, $dashboard ]
+ -
+  type: perspective
+  ref: perspective
+  data:
+   name: $profilerequest:nombre_asignatura$sin nombre$
+   preferences:
+    category_jail: $project_root
+    wikiHomePage: $dashboard
+    browsertitle: $profilerequest:nombre_asignatura$Asignatura sin nombre$
+    style: fivealive.css
+    style_option: kiwi.css
+    feature_wysiwyg: y
+    wysiwyg_default: y
+    wysiwyg_optional: y
+ -
+  type: wiki_page
+  ref: dashboard
+  data:
+   name: $profilerequest:nombre_asignatura$Asignatura sin nombre$ Homepage
+   content: "Bienvenido a tu nueva asignatura"
+permissions:
+ Member:
+  autojoin: y
+  allow:
+      - view 
+      - edit
+      - wiki_view_history
+      - wiki_view_source
+      - minor
+      - upload_picture
+      - rollback
+      - view_category
+      - search
+      - delete_account
+      - group_view
+      - group_view_members
+      - view_category
+      - add_object
+      - modify_object_categories
+  objects:
+   -
+    type: category
+    id: $project_root
+    allow:
+      - view 
+      - edit
+      - wiki_view_history
+      - wiki_view_source
+      - minor
+      - upload_picture
+      - rollback
+      - view_category
+      - search
+      - delete_account
+      - group_view
+      - group_view_members
+      - add_object
+      - modify_object_categories
+   -
+    type: perspective
+    id: $perspective
+    allow: [ perspective_view ]
+ Lead:
+  autojoin: y
+  allow:
+      - view 
+      - edit
+      - wiki_view_history
+      - wiki_view_source
+      - minor
+      - upload_picture
+      - rollback
+      - view_category
+      - search
+      - delete_account
+      - group_view
+      - group_view_members
+      - view_category
+      - add_object
+      - modify_object_categories
+      - remove
+      - rollback
+      - wiki_attach_files
+      - admin_attachments
+      - view_attachments
+      - upload_picture
+      - minor
+      - rename
+      - lock
+      - edit_structures
+      - edit_copyrights
+      - wiki_view_comments
+      - wiki_view_ratings
+      - wiki_vote_ratings
+      - wiki_admin_ratings
+      - wiki_view_history
+      - use_HTML
+  objects:
+   -
+    type: category
+    id: $project_root
+    allow:
+      - view 
+      - edit
+      - wiki_view_history
+      - wiki_view_source
+      - minor
+      - upload_picture
+      - rollback
+      - view_category
+      - search
+      - delete_account
+      - group_view
+      - group_view_members
+      - view_category
+      - add_object
+      - modify_object_categories
+      - remove
+      - rollback
+      - wiki_attach_files
+      - admin_attachments
+      - view_attachments
+      - upload_picture
+      - minor
+      - rename
+      - lock
+      - edit_structures
+      - edit_copyrights
+      - wiki_view_comments
+      - wiki_view_ratings
+      - wiki_vote_ratings
+      - wiki_admin_ratings
+      - wiki_view_history
+      - use_HTML
+   -
+    type: perspective
+    id: $perspective
+    allow: [ perspective_view ]
+{CODE}
+\end{pyglist}
+
+\subsection{Profile: Interfaz para Crear Comunidad de Practica}
+\label{section:creacion-comunidad-gui}
+
+\begin{pyglist}[language=text]
+Este Profile genera una comunidad de práctica con el nombre que se le especifique:
+{DATACHANNEL(channel=crear_comunidad)}
+nombre_asignatura, Nombre asignatura
+{DATACHANNEL}
+\end{pyglist}

@@ -1,0 +1,72 @@
+\chapter{Manual de Usuario}
+\label{appendix:apendice-c}
+
+\section{Obtención del código fuente}
+
+Todo el código que se ha producido para este \pfc{} se ha subido a un repositorio de \textit{BitBucket} \cite{web:bitbucket} (que es un servidor que permite alojar código fuente de manera gratuita y que utiliza el gestor de código distribuido \textit{Mercurial}, conocido también como: \texttt{hg} \cite{web:mercurial}).
+
+Para descargar el código utilizando \texttt{hg} podemos ejecutar el siguiente comando en la terminal:
+
+\begin{pyglist}[language=bash]
+  $ hg clone https://bitbucket.org/aldoborrero/alma-profiles
+\end{pyglist}
+
+También podemos obtener una versión comprimida lista para descargar por \textit{http} si acudimos al siguiente enlace:
+
+\begin{pyglist}[language=html]
+https://bitbucket.org/aldoborrero/alma-profiles/get/v1.2.zip
+\end{pyglist}
+
+El directorio que obtendremos al descomprimir será el siguiente:
+
+\begin{itemize}
+\item \code{config.yml}: Este archivo contiene el \profile{} de configuración de \alma{}.
+\item \code{Crear\_Comunidad\_de\_Practica\_GUI.yml}: Contiene el Data Channel.
+\item \code{Crear\_Comunidad\_de\_Practica\_Template.yml}: Contiene la implementación del \profile{} que genera las comunidades de práctica.
+\item \code{logo}: Este directorio en su interior posee el logotipo que utiliza \alma{}.
+\item \code{mail}: Este directorio contiene una implementación alternativa de la librería de correo que utiliza \tiki{} y que soluciona ciertos problemas que teníamos con la antigua. Los ficheros que hay dentro son:
+
+	\begin{itemize}
+	\item \code{TikiMaillib.diff}: La nueva implementación de la librería de correo re-escrita por el autor del \pfc{}. Hay que decir que la implementación no es completa, sólo funciona para los requisitos que tiene \alma{} y no contempla otros casos de uso. Se desarrolló sólo con el objetivo de solucionar el problema que nos surgió, ¡no para reemplazar al original de manera completa!
+	\item \code{swift}: Código fuente del proyecto \code{SwiftMailer} \cite{web:swiftmailer} que es una librería escrita en \php{} que permite trabajar con el envío de correos electrónicos de manera sencilla.
+	\end{itemize}
+\end{itemize}
+
+\section{Requisitos previos}
+
+Para poder ejecutar el código fuente se asume que el usuario ha instalado correctamente \tiki{} y que no ha configurado más que las opciones básicas de la instalación. También se asume que el usuario posee una versión de \code{UNIX}, da igual si es \code{Linux}, \code{OS X} o \code{BSD} (aunque los comandos se pueden adaptar fácilmente a un entorno \texttt{Windows}).
+
+\section{Instalación}
+
+El primer paso que se va a realizar es proceder a la sustitución de la librería de correo de \tiki{}, así pues, hay que seguir los siguientes pasos:
+
+\begin{enumerate}
+\item Copiar el contenido del directorio \code{mail} (no la carpeta).
+\item Dirigirnos a la carpeta donde tengamos instalado \tiki{}.
+\item Navegar hasta \code{lib/webmail}.
+\item Pegar lo que copiamos en dicho directorio.
+\item A continuación, vamos a usar la herramienta de \code{UNIX}, \code{patch} (si no se ha usado nunca esta herramienta se recomienda visitar el siguiente enlace: \url{http://www.linuxtutorialblog.com/post/introduction-using-diff-and-patch-tutorial} que incluye un tutorial que explica el procedimiento), nos situamos en el directorio donde hemos copiado antes y hay que ejecutar lo siguiente en la terminal:
+\begin{pyglist}[language=bash]
+patch tikimaillib.php -i TikiMaillib.diff -o tikimaillib.php
+\end{pyglist}
+\item Con esto la librería de \tiki{} queda con el \textit{parche} puesto y funcionando para las necesidades de \alma{}.
+\end{enumerate}
+
+A continuación, vamos a instalar el \profile{} que configura \alma{}. Para ello seguimos los siguientes pasos:
+
+\begin{enumerate}
+\item Abrimos el archivo \code{config.yml} y copiamos todo su contenido.
+\item Acudimos al panel de administración de \profiles{} a la pestaña \code{Avanzado}. En el apartado denominado \code{Profile Tester} (el que nos permite ejecutar \profiles{} de prueba directamente) pegamos en el recuadro y cambiamos la contraseña de correo por la \textit{correcta}, asignamos un nombre en la casilla \code{Test Profile Name}, por ejemplo: \code{Configuración} y ejecutamos.
+\item ¡Ya está \alma{} configurado!
+\end{enumerate}
+
+¿Por qué en este caso hemos utilizado directamente el \code{Profile Tester} en lugar de crear una página wiki y crear un \textit{Data Channel} y un botón de ejecución con la herramienta \textit{plug-in Data Channel} como se explicó en el capítulo anterior? La respuesta es bien sencilla, esto es debido a que realmente no vamos a ejecutar dicho \profile{} de manera regular. Simplemente se utiliza una vez por cada instalación nueva en la que queramos replicar las bases del proyecto \alma{}. Por lo tanto no tiene sentido que \textit{perdamos} tiempo en realizar todos los pasos anteriores.
+
+Ahora ya sólo queda realizar el último paso que es copiar el contenido del \profile{} que genera comunidades de práctica dentro de la página wiki:
+
+\begin{enumerate}
+\item Abrimos el documento \code{Crear\_Comunidad\_de\_Practica\_Template.yml} y copiamos todo el contenido.
+\item Nos dirigimos como administrador a \code{Listar Páginas Wiki} y buscamos la página wiki del mismo nombre que el archivo.
+\item Pegamos el contenido en la página y guardamos.
+\item ¡Ya podemos ejecutar nuestro \profile{} y crear comunidades de práctica visitando la página wiki \code{Crear\_Comunidad\_de\_Practica\_GUI.yml}!
+\end{enumerate}
